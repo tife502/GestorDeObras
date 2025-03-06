@@ -3,7 +3,7 @@ from datetime import datetime
 
 class SolicitudMaterial(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    trabajador_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    trabajador_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
     trabajador = db.relationship('Usuario', backref=db.backref('solicitudes', lazy=True))
     material_id = db.Column(db.Integer, db.ForeignKey('material.id'), nullable=False)
     material = db.relationship('Material', backref=db.backref('solicitudes', lazy=True))

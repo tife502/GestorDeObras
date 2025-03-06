@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app import db, bcrypt
-from app.models import Usuario
+from app.models.usuario import Usuario
 from flask_jwt_extended import create_access_token
 
 usuarios_bp = Blueprint("usuarios", __name__)
@@ -32,5 +32,11 @@ def login():
 
 @usuarios_bp.route("/helo", methods=["GET"])
 def prueba():
+    data = request.json
     return jsonify({"mensaje": "Hola mundo"}), 200
     
+@usuarios_bp.route("/mostrar", methods=["GET"])
+def obtenerusuarios():
+    usuarios = Usuario.query.all()
+    usuarios_json = [usuario.to_dict() for usuario in usuarios]  # Convertir a JSON
+    return jsonify(usuarios_json), 200
