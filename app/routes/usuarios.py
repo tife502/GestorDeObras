@@ -9,10 +9,12 @@ usuarios_bp = Blueprint("usuarios", __name__)
 def registrar_usuario():
     data = request.json
     hashed_password = bcrypt.generate_password_hash(data["password"]).decode("utf-8")
+    hashed_vepassword = bcrypt.generate_password_hash(data["verifyPassword"]).decode("utf-8")
     nuevo_usuario = Usuario(
         nombre=data["nombre"],
         email=data["email"],
         password=hashed_password,
+        verifyPassword=hashed_vepassword,
         rol_id=data["rol_id"]
     )
     db.session.add(nuevo_usuario)
@@ -23,7 +25,9 @@ def registrar_usuario():
 def login():
     data = request.json
     usuario = Usuario.query.filter_by(email=data["email"]).first()
-    
+    if not usuario:
+        return jsonify({"error": "Usuario no registrado"}), 404 
+        
     if usuario and bcrypt.check_password_hash(usuario.password, data["password"]):
         token = create_access_token(identity=usuario.id)
         return jsonify({"token": token}), 200
@@ -40,3 +44,4 @@ def obtenerusuarios():
     usuarios = Usuario.query.all()
     usuarios_json = [usuario.to_dict() for usuario in usuarios]  # Convertir a JSON
     return jsonify(usuarios_json), 200
+
