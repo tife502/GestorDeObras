@@ -22,6 +22,9 @@ def create_app():
     jwt.init_app(app)
     CORS(app)
 
+    from app.services.email_service import mail
+    mail.init_app(app)
+    
     # Registrar rutas
     from app.routes.main import main_bp  # Importa la nueva ruta principal
     from app.routes.usuarios import usuarios_bp
