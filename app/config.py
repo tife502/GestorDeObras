@@ -14,9 +14,3 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "postgresql://usuario:password@localhost:5432/gestion_obras")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-
-
-print("📌 MAIL_USERNAME:", os.getenv("MAIL_USERNAME"))
-print("📌 MAIL_PASSWORD:", "Oculto por seguridad" if os.getenv("MAIL_PASSWORD") else "No encontrado")
-print("📌 DATABASE_URL:", os.getenv("DATABASE_URL"))
-print("📌 JWT_SECRET_KEY:", os.getenv("JWT_SECRET_KEY"))

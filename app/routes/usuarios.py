@@ -1,10 +1,11 @@
 from flask import Blueprint, request, jsonify, url_for
 from app import db, bcrypt
 from app.models.usuario import Usuario
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 import re
 from app.services.email_service import enviar_email
 import secrets
+from datetime import datetime, timedelta
 
 reset_tokens = {}
 
@@ -18,10 +19,28 @@ def es_email_valido(email):
 def login():
     data = request.json
     usuario = Usuario.query.filter_by(email=data["email"]).first()
-    if usuario and bcrypt.check_password_hash(usuario.password, data["password"]):
-        token = create_access_token(identity=usuario.id)
-        return jsonify({"token": token}), 200
-    
+
+    if usuario:
+        if usuario.bloqueado_hasta and usuario.bloqueado_hasta > datetime.utcnow():
+            return jsonify({"error": "Cuenta bloqueada. Intenta más tarde."}), 403
+
+        if bcrypt.check_password_hash(usuario.password, data["password"]):
+            usuario.intentos_fallidos = 0
+            db.session.commit()
+            token = create_access_token(identity=usuario.id)
+            return jsonify({"token": token}), 200
+        else:
+            usuario.intentos_fallidos += 1
+            if usuario.intentos_fallidos >= 3:
+                usuario.bloqueado_hasta = datetime.utcnow() + timedelta(minutes=15)
+                # Envía un correo para recuperación de contraseña
+                token = secrets.token_urlsafe(20)
+                reset_tokens[token] = usuario.email
+                enlace = url_for("usuarios.resetear_contrasena", token=token, _external=True)
+                enviar_email(usuario.email, "Recuperación de contraseña", f"Enlace para restablecer: {enlace}")
+            db.session.commit()
+            return jsonify({"error": "Credenciales inválidas"}), 401
+
     return jsonify({"error": "Credenciales inválidas"}), 401
 
 @usuarios_bp.route("/registro", methods=["POST"])
@@ -76,7 +95,6 @@ def recuperar_contrasena():
         print("Error en el servidor:", str(e))  # 🔹 Esto imprimirá el error en la terminal
         return jsonify({"error": "Error interno del servidor"}), 500
 
-
 @usuarios_bp.route("/resetear/<token>", methods=["POST"])
 def resetear_contrasena(token):
     data = request.json
@@ -101,8 +119,20 @@ def resetear_contrasena(token):
     del reset_tokens[token]
 
     return jsonify({"mensaje": "Contraseña actualizada exitosamente"}), 200
-#*@usuarios_bp.route("/mostrar", methods=["GET"])
-# def obtenerusuarios():
-#    usuarios = Usuario.query.all()
-#    usuarios_json = [usuario.to_dict() for usuario in usuarios]  # Convertir a JSON
-#    return jsonify(usuarios_json), 200
+
+@usuarios_bp.route("/perfil", methods=["GET"])
+@jwt_required()
+def perfil():
+    usuario_id = get_jwt_identity()
+    usuario = Usuario.query.get(usuario_id)
+    if not usuario:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+    
+    return jsonify({
+        "nombre": usuario.nombre,
+        "email": usuario.email
+    }), 200
+
+
+
+

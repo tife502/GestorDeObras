@@ -15,7 +15,7 @@ app.config['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD")
 mail = Mail(app)
 
 with app.app_context():
-    msg = Message("Prueba de correo", sender=app.config['MAIL_USERNAME'], recipients=["tuemail@gmail.com"])
+    msg = Message("Prueba de correo", sender=app.config['MAIL_USERNAME'], recipients=["tife502@yopmail.com"])
     msg.body = "Este es un correo de prueba."
 
     try:
