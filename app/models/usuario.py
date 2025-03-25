@@ -10,6 +10,7 @@ class Usuario(db.Model):
     rol_id = db.Column(db.Integer, db.ForeignKey("roles.id", ondelete="CASCADE"), nullable=False, default=1)
     intentos_fallidos = db.Column(db.Integer, default=0)
     bloqueado_hasta = db.Column(db.DateTime, nullable=True)
+    activo = db.Column(db.Boolean, default=True)
     
     rol = db.relationship("Rol", backref=db.backref("usuarios", lazy=True))
     zona_trabajo = db.relationship("ZonaTrabajo", backref="trabajador", uselist=False)

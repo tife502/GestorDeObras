@@ -6,10 +6,24 @@ import re
 from app.services.email_service import enviar_email
 import secrets
 from datetime import datetime, timedelta
+from functools import wraps
 
 reset_tokens = {}
 
 usuarios_bp = Blueprint("usuarios", __name__)
+
+
+def rol_requerido(rol):
+    def decorador(func):
+        @wraps(func)
+        def decorador_function(*args, **kwargs):
+            usuario_id = get_jwt_identity()
+            usuario = Usuario.query.get(usuario_id)
+            if usuario.rol != rol:
+                return jsonify({"error": "No tienes permiso para realizar esta acción"}), 403
+            return func(*args, **kwargs)
+        return decorador_function
+    return decorador
 
 def es_email_valido(email):
     patron = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
@@ -133,6 +147,39 @@ def perfil():
         "email": usuario.email
     }), 200
 
+@usuarios_bp.route("/usuarios/<int:id>/desactivar", methods=["PUT"])
+@jwt_required()
+@rol_requerido('administrador')
+def desactivar_usuario(id):
+    usuario = Usuario.query.get(id)
+    if not usuario:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+    usuario.activo = False
+    db.session.commit()
+    return jsonify({"mensaje": "Usuario desactivado exitosamente"}), 200
 
 
+@usuarios_bp.route("/usuarios", methods=["GET"])
+@jwt_required()
+def obtener_usuarios():
+    usuario_id = get_jwt_identity()
+    usuario_actual = Usuario.query.get(usuario_id)
+    
+    if usuario_actual.rol.nombre == 'administrador':
+        usuarios = Usuario.query.filter_by(activo=True).all()
+    elif usuario_actual.rol.nombre == 'arquitecto':
+        usuarios = Usuario.query.filter(Usuario.activo == True, Usuario.rol.has(nombre='supervisor') | Usuario.rol.has(nombre='trabajador')).all()
+    elif usuario_actual.rol.nombre == 'supervisor':
+        usuarios = Usuario.query.filter(Usuario.activo == True, Usuario.rol.has(nombre='trabajador')).all()
+    elif usuario_actual.rol.nombre == 'trabajador':
+        usuarios = [usuario_actual]
+    else:
+        return jsonify({"error": "Rol no reconocido"}), 403
+
+    return jsonify([{
+        "id": usuario.id,
+        "nombre": usuario.nombre,
+        "email": usuario.email,
+        "rol": usuario.rol.nombre
+    } for usuario in usuarios]), 200
 
