@@ -27,8 +27,16 @@ def create_app():
     
     # Registrar rutas
     from app.routes.main import main_bp  # Importa la nueva ruta principal
+    app.register_blueprint(main_bp)  # Ruta principal
     from app.routes.usuarios import usuarios_bp
     app.register_blueprint(usuarios_bp, url_prefix="/api/usuarios")
-    app.register_blueprint(main_bp)  # Ruta principal
+    from app.routes.zonas import zonas_bp
+    app.register_blueprint(zonas_bp, url_prefix="/api/zonas")
+    from app.routes.materiales import materiales_bp
+    app.register_blueprint(materiales_bp, url_prefix="/api/materiales")
+    from app.routes.roles import roles_bp
+    app.register_blueprint(roles_bp, url_prefix="/api/roles")
+    from app.routes.obras import obras_bp
+    app.register_blueprint(obras_bp, url_prefix="/api/obras")
 
     return app

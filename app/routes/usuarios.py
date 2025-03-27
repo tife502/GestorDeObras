@@ -6,24 +6,12 @@ import re
 from app.services.email_service import enviar_email
 import secrets
 from datetime import datetime, timedelta
-from functools import wraps
+from app.utils.decorators import rol_requerido
 
 reset_tokens = {}
 
 usuarios_bp = Blueprint("usuarios", __name__)
 
-
-def rol_requerido(rol):
-    def decorador(func):
-        @wraps(func)
-        def decorador_function(*args, **kwargs):
-            usuario_id = get_jwt_identity()
-            usuario = Usuario.query.get(usuario_id)
-            if usuario.rol != rol:
-                return jsonify({"error": "No tienes permiso para realizar esta acción"}), 403
-            return func(*args, **kwargs)
-        return decorador_function
-    return decorador
 
 def es_email_valido(email):
     patron = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
@@ -182,4 +170,24 @@ def obtener_usuarios():
         "email": usuario.email,
         "rol": usuario.rol.nombre
     } for usuario in usuarios]), 200
+
+@usuarios_bp.route("/usuarios/<int:id>", methods=["GET"])
+@jwt_required()
+@rol_requerido('administrador')
+def modificar_roles(id):
+    data = request.json
+    usuario = Usuario.query.get(id)
+    if not usuario:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    if usuario.rol.nombre == 'administrador':
+        return jsonify({"error": "No se puede modificar el rol de un administrador"}), 403
+
+    nuevo_rol = data.get("rol")
+    if not nuevo_rol:
+        return jsonify({"error": "Se requiere un rol"}), 400
+
+    usuario.rol_id = nuevo_rol
+    db.session.commit()
+    return jsonify({"mensaje": "Rol modificado exitosamente"}), 200
 
