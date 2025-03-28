@@ -9,14 +9,12 @@ obras_bp = Blueprint('obras', __name__)
 
 
 @obras_bp.route('/mostrar', methods=['GET'])
-@jwt_required()
 @rol_requerido('administrador', 'arquitecto')
 def mostrar_obras():
     obras = Obra.query.all()
     return jsonify([obra.to_dict() for obra in obras]), 200
 
 @obras_bp.route('/crear', methods=['POST'])
-@jwt_required()
 @rol_requerido('administrador', 'arquitecto')
 def crear_obra():
     data = request.get_json()
@@ -24,3 +22,12 @@ def crear_obra():
     db.session.add(obra)
     db.session.commit()
     return jsonify(obra.to_dict()), 201
+
+@obras_bp.route('/editar/<int:id>', methods=['PUT'])
+@rol_requerido('administrador', 'arquitecto')
+def editar_obra(id):
+    data = request.get_json()
+    obra = Obra.query.get_or_404(id)
+    obra.update(data)
+    db.session.commit()
+    return jsonify(obra.to_dict()), 200

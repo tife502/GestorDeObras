@@ -101,29 +101,20 @@ def recuperar_contrasena():
 def resetear_contrasena(token):
     data = request.json
     nueva_password = data.get("password")
-
-    # Verificar si el token es válido
     email = reset_tokens.get(token)
     if not email:
         return jsonify({"error": "Token inválido o expirado"}), 400
-
-    # Buscar usuario
     usuario = Usuario.query.filter_by(email=email).first()
     if not usuario:
         return jsonify({"error": "Usuario no encontrado"}), 404
-
-    # Hashear la nueva contraseña y actualizar en la base de datos
     hashed_password = bcrypt.generate_password_hash(nueva_password).decode("utf-8")
     usuario.password = hashed_password
     db.session.commit()
-
-    # Eliminar el token usado
     del reset_tokens[token]
 
     return jsonify({"mensaje": "Contraseña actualizada exitosamente"}), 200
 
 @usuarios_bp.route("/perfil", methods=["GET"])
-@jwt_required()
 def perfil():
     usuario_id = get_jwt_identity()
     usuario = Usuario.query.get(usuario_id)
@@ -136,7 +127,6 @@ def perfil():
     }), 200
 
 @usuarios_bp.route("/usuarios/<int:id>/desactivar", methods=["PUT"])
-@jwt_required()
 @rol_requerido('administrador')
 def desactivar_usuario(id):
     usuario = Usuario.query.get(id)
@@ -146,33 +136,15 @@ def desactivar_usuario(id):
     db.session.commit()
     return jsonify({"mensaje": "Usuario desactivado exitosamente"}), 200
 
-
-@usuarios_bp.route("/usuarios", methods=["GET"])
-@jwt_required()
+@usuarios_bp.route("/mostrarusuarios", methods=["GET"])
 def obtener_usuarios():
-    usuario_id = get_jwt_identity()
-    usuario_actual = Usuario.query.get(usuario_id)
-    
-    if usuario_actual.rol.nombre == 'administrador':
-        usuarios = Usuario.query.filter_by(activo=True).all()
-    elif usuario_actual.rol.nombre == 'arquitecto':
-        usuarios = Usuario.query.filter(Usuario.activo == True, Usuario.rol.has(nombre='supervisor') | Usuario.rol.has(nombre='trabajador')).all()
-    elif usuario_actual.rol.nombre == 'supervisor':
-        usuarios = Usuario.query.filter(Usuario.activo == True, Usuario.rol.has(nombre='trabajador')).all()
-    elif usuario_actual.rol.nombre == 'trabajador':
-        usuarios = [usuario_actual]
-    else:
-        return jsonify({"error": "Rol no reconocido"}), 403
+    usuarios = Usuario.query.all()
+    print(usuarios.rol.nombrerol)
+    return jsonify([usuario.to_dict() for usuario in usuarios]), 200
 
-    return jsonify([{
-        "id": usuario.id,
-        "nombre": usuario.nombre,
-        "email": usuario.email,
-        "rol": usuario.rol.nombre
-    } for usuario in usuarios]), 200
+
 
 @usuarios_bp.route("/usuarios/<int:id>", methods=["GET"])
-@jwt_required()
 @rol_requerido('administrador')
 def modificar_roles(id):
     data = request.json
