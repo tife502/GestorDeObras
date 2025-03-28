@@ -139,7 +139,6 @@ def desactivar_usuario(id):
 @usuarios_bp.route("/mostrarusuarios", methods=["GET"])
 def obtener_usuarios():
     usuarios = Usuario.query.all()
-    print(usuarios.rol.nombrerol)
     return jsonify([usuario.to_dict() for usuario in usuarios]), 200
 
 
