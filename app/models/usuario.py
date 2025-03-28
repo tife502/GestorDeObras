@@ -20,5 +20,5 @@ class Usuario(db.Model):
             "id": self.id,
             "nombre": self.nombre,
             "email": self.email,
-            "rol": self.rol.nombrerol
+            "rol": self.rol_id
         }
