@@ -2,7 +2,6 @@ from flask import Blueprint, request, jsonify, url_for
 from app import db, bcrypt
 from app.models.usuario import Usuario
 from app.models import Usuario, Rol
-
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 import re
 from app.services.email_service import enviar_email
@@ -144,26 +143,6 @@ def obtener_usuarios():
     usuarios = Usuario.query.all()
     return jsonify([usuario.to_dict() for usuario in usuarios]), 200
 
-
-
-@usuarios_bp.route("/usuarios/<int:id>", methods=["GET"])
-@rol_requerido('administrador')
-def modificar_roles(id):
-    data = request.json
-    usuario = Usuario.query.get(id)
-    if not usuario:
-        return jsonify({"error": "Usuario no encontrado"}), 404
-
-    if usuario.rol.nombre == 'administrador':
-        return jsonify({"error": "No se puede modificar el rol de un administrador"}), 403
-
-    nuevo_rol = data.get("rol")
-    if not nuevo_rol:
-        return jsonify({"error": "Se requiere un rol"}), 400
-
-    usuario.rol_id = nuevo_rol
-    db.session.commit()
-    return jsonify({"mensaje": "Rol modificado exitosamente"}), 200
 
 # Eliminar usuario por ID
 @usuarios_bp.route("/eliminarusuario/<int:id>", methods=["DELETE"])
