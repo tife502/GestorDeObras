@@ -1,16 +1,19 @@
 from flask import Blueprint, request, jsonify, url_for
 from app import db, bcrypt
 from app.models.usuario import Usuario
+from app.models import Usuario, Rol
+
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 import re
 from app.services.email_service import enviar_email
 import secrets
 from datetime import datetime, timedelta
 from app.utils.decorators import rol_requerido
-
+from flask_cors import CORS
 reset_tokens = {}
 
 usuarios_bp = Blueprint("usuarios", __name__)
+CORS(usuarios_bp) 
 
 
 def es_email_valido(email):
@@ -161,4 +164,49 @@ def modificar_roles(id):
     usuario.rol_id = nuevo_rol
     db.session.commit()
     return jsonify({"mensaje": "Rol modificado exitosamente"}), 200
+
+# Eliminar usuario por ID
+@usuarios_bp.route("/eliminarusuario/<int:id>", methods=["DELETE"])
+def eliminar_usuario(id):
+    usuario = Usuario.query.get(id)
+    if not usuario:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    db.session.delete(usuario)
+    db.session.commit()
+    return jsonify({"mensaje": "Usuario eliminado exitosamente"}), 200
+
+# Modificar usuario por ID
+@usuarios_bp.route("/modificarusuario/<int:id>", methods=["OPTIONS", "PATCH"])
+def modificar_usuario(id):
+    if request.method == "OPTIONS":
+        return '', 204  # Respuesta para preflight request
+
+    usuario = db.session.get(Usuario, id)
+    if not usuario:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    datos = request.json
+    usuario.nombre = datos.get("nombre", usuario.nombre)
+    usuario.email = datos.get("email", usuario.email)
+
+    rol_id = datos.get("rol")
+    if rol_id:
+        try:
+            rol_id = int(rol_id)
+        except ValueError:
+            return jsonify({"error": "El rol debe ser un número"}), 400
+
+        rol_obj = db.session.get(Rol, rol_id)
+        if rol_obj:
+            usuario.rol = rol_obj
+        else:
+            return jsonify({"error": "Rol no encontrado"}), 400
+
+    try:
+        db.session.commit()
+        return jsonify({"mensaje": "Usuario modificado exitosamente"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
