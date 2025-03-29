@@ -1,33 +1,45 @@
 from flask import Blueprint, request, jsonify
+from datetime import date
 from app import db
 from app.models.obra import Obra
-from flask_jwt_extended import jwt_required
-from app.utils.decorators import rol_requerido
-
 
 obras_bp = Blueprint('obras', __name__)
 
-
 @obras_bp.route('/mostrar', methods=['GET'])
-@rol_requerido('administrador', 'arquitecto')
 def mostrar_obras():
     obras = Obra.query.all()
     return jsonify([obra.to_dict() for obra in obras]), 200
 
 @obras_bp.route('/crear', methods=['POST'])
-@rol_requerido('administrador', 'arquitecto')
 def crear_obra():
     data = request.get_json()
-    obra = Obra(**data)
-    db.session.add(obra)
+
+    # Asignar valores predeterminados si no se envían
+    nueva_obra = Obra(
+        nombre=data.get("nombre", ""),
+        descripcion=data.get("descripcion", ""),
+        fecha_inicio=data.get("fecha_inicio", date.today()),  # Fecha actual si no se envía
+        fecha_fin=data.get("fecha_fin")  # Puede ser None
+    )
+
+    db.session.add(nueva_obra)
     db.session.commit()
-    return jsonify(obra.to_dict()), 201
+    return jsonify(nueva_obra.to_dict()), 201
 
 @obras_bp.route('/editar/<int:id>', methods=['PUT'])
-@rol_requerido('administrador', 'arquitecto')
 def editar_obra(id):
     data = request.get_json()
     obra = Obra.query.get_or_404(id)
-    obra.update(data)
+
+    # Solo actualizar los campos que se envían en la petición
+    if "nombre" in data:
+        obra.nombre = data["nombre"]
+    if "descripcion" in data:
+        obra.descripcion = data["descripcion"]
+    if "fecha_inicio" in data:
+        obra.fecha_inicio = data["fecha_inicio"]
+    if "fecha_fin" in data:
+        obra.fecha_fin = data["fecha_fin"]
+
     db.session.commit()
     return jsonify(obra.to_dict()), 200
