@@ -9,6 +9,9 @@ import secrets
 from datetime import datetime, timedelta
 from app.utils.decorators import rol_requerido
 from flask_cors import CORS
+from app.models.zona import ZonaTrabajo
+
+
 reset_tokens = {}
 
 usuarios_bp = Blueprint("usuarios", __name__)
@@ -29,6 +32,12 @@ def login():
             return jsonify({"error": "Cuenta bloqueada. Intenta más tarde."}), 403
 
         if bcrypt.check_password_hash(usuario.password, data["password"]):
+            if usuario.rol.nombrerol =="trabajador":
+                zona = ZonaTrabajo.query.filter_by(trabajador_id=usuario.id).first()
+                if zona:
+                    zona.check_in = datetime.utcnow()
+                    zona.check_out = None
+                    db.session.commit()
             usuario.intentos_fallidos = 0
             db.session.commit()
             token = create_access_token(identity=usuario.id)
@@ -145,15 +154,20 @@ def obtener_usuarios():
 
 
 # Eliminar usuario por ID
-@usuarios_bp.route("/eliminarusuario/<int:id>", methods=["DELETE"])
+@usuarios_bp.route("/eliminarusuario/<int:id>", methods=["PUT"])
 def eliminar_usuario(id):
     usuario = Usuario.query.get(id)
     if not usuario:
         return jsonify({"error": "Usuario no encontrado"}), 404
 
-    db.session.delete(usuario)
-    db.session.commit()
-    return jsonify({"mensaje": "Usuario eliminado exitosamente"}), 200
+    # Marcar al usuario como inactivo
+    usuario.activo = False
+    try:
+        db.session.commit()
+        return jsonify({"mensaje": "Usuario marcado como inactivo exitosamente"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Error al marcar como inactivo: {str(e)}"}), 500
 
 # Modificar usuario por ID
 @usuarios_bp.route("/modificarusuario/<int:id>", methods=["OPTIONS", "PATCH"])

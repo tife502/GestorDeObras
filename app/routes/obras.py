@@ -43,3 +43,12 @@ def editar_obra(id):
 
     db.session.commit()
     return jsonify(obra.to_dict()), 200
+
+@obras_bp.route('/eliminar/<int:id>', methods=['DELETE'])
+def eliminar_obra(id):
+    obra = Obra.query.get_or_404(id)
+    db.session.delete(obra)
+    db.session.commit()
+    return jsonify({"message": "Obra eliminada con éxito"}), 200
+
+
