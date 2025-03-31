@@ -14,12 +14,18 @@ def mostrar_obras():
 def crear_obra():
     data = request.get_json()
 
+    fecha_inicio = data.get("fecha_inicio", date.today())  # Fecha actual si no se envía
+    fecha_final = data.get("fecha_fin")  # Puede ser None
+
+    if fecha_final and fecha_final < fecha_inicio:
+        return jsonify({"error": "La fecha de fin no puede ser anterior a la fecha de inicio"}), 400
+
     # Asignar valores predeterminados si no se envían
     nueva_obra = Obra(
         nombre=data.get("nombre", ""),
         descripcion=data.get("descripcion", ""),
-        fecha_inicio=data.get("fecha_inicio", date.today()),  # Fecha actual si no se envía
-        fecha_fin=data.get("fecha_fin")  # Puede ser None
+        fecha_inicio=fecha_inicio,
+        fecha_fin= fecha_final
     )
 
     db.session.add(nueva_obra)

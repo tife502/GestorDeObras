@@ -22,7 +22,7 @@ def obtener_material(material_id):
     return jsonify({"id": material.id, "nombre": material.nombre, "cantidad_disponible": material.cantidad_disponible}), 200
 
 # Crear un nuevo material
-@materiales_bp.route("/materiales", methods=["POST"])
+@materiales_bp.route("/crearmateriales", methods=["POST"])
 def crear_material():
     data = request.get_json()
     nombre = data.get("nombre")
@@ -30,6 +30,13 @@ def crear_material():
 
     if not nombre:
         return jsonify({"error": "El nombre es obligatorio"}), 400
+
+    try:
+        cantidad_disponible = int(cantidad_disponible)
+        if cantidad_disponible < 0:  # Validar que la cantidad inicial no sea negativa
+            return jsonify({"error": "La cantidad disponible no puede ser negativa"}), 400
+    except (ValueError, TypeError):
+        return jsonify({"error": "La cantidad debe ser un número válido"}), 400
 
     nuevo_material = Material(nombre=nombre, cantidad_disponible=cantidad_disponible)
     db.session.add(nuevo_material)
@@ -45,9 +52,17 @@ def actualizar_material(material_id):
         return jsonify({"error": "Material no encontrado"}), 404
 
     data = request.get_json()
-    material.nombre = data.get("nombre", material.nombre)
-    material.cantidad_disponible = data.get("cantidad_disponible", material.cantidad_disponible)
 
+    if "cantidad_disponible" in data:
+        try:
+            nueva_cantidad = int(data["cantidad_disponible"])
+            if nueva_cantidad < 0:  # Validar que la cantidad no sea negativa
+                return jsonify({"error": "La cantidad disponible no puede ser negativa"}), 400
+            material.cantidad_disponible = nueva_cantidad
+        except (ValueError, TypeError):
+            return jsonify({"error": "La cantidad debe ser un número válido"}), 400
+
+    material.nombre = data.get("nombre", material.nombre)
     db.session.commit()
     return jsonify({"message": "Material actualizado exitosamente"}), 200
 
@@ -83,6 +98,8 @@ def crear_solicitud():
 
     try:
         cantidad_solicitada = int(data["cantidad"])
+        if cantidad_solicitada <= 0:  # Validar que la cantidad sea positiva
+            return jsonify({"error": "La cantidad solicitada debe ser un número positivo"}), 400
     except (ValueError, TypeError):
         return jsonify({"error": "La cantidad debe ser un número válido"}), 400
 
@@ -98,7 +115,7 @@ def crear_solicitud():
 # Actualizar estado de solicitud
 @materiales_bp.route("/materiales/solicitudes/<int:id>", methods=["PUT"])
 def actualizar_solicitud(id):
-    solicitud = solicitudes_materiales.query.get(id)
+    solicitud = SolicitudMaterial.query.get(id)
     if not solicitud:
         return jsonify({"error": "Solicitud no encontrada"}), 404
 

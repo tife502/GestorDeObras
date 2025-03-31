@@ -38,6 +38,7 @@ def login():
                     zona.check_in = datetime.utcnow()
                     zona.check_out = None
                     db.session.commit()
+                    
             usuario.intentos_fallidos = 0
             db.session.commit()
             token = create_access_token(identity=usuario.id)
@@ -89,6 +90,7 @@ def recuperar_contrasena():
 
         usuario = Usuario.query.filter_by(email=email).first()
         if not usuario:
+            print(usuario)
             return jsonify({"error": "Usuario no encontrado"}), 404
 
         # Generar token de recuperación
