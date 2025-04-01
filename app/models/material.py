@@ -6,3 +6,4 @@ class Material(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
     cantidad_disponible = db.Column(db.Integer, default=0, nullable=False)
+    id_zona = db.Column(db.Integer, db.ForeignKey("zonas.id", ondelete="CASCADE"), nullable=False)

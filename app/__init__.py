@@ -36,7 +36,6 @@ def create_app():
     app.register_blueprint(materiales_bp, url_prefix="/api/materiales")
     from app.routes.roles import roles_bp
     app.register_blueprint(roles_bp, url_prefix="/api/roles")
-    from app.routes.obras import obras_bp
-    app.register_blueprint(obras_bp, url_prefix="/api/obras")
+
 
     return app

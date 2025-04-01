@@ -3,55 +3,64 @@ from app import db
 from app.models.material import Material
 from app.models.usuario import Usuario
 from app.models.solicitud import SolicitudMaterial
+from app.utils.decorators import rol_requerido  # Importa el decorador para roles
 
 materiales_bp = Blueprint("materiales", __name__)
 
-# Obtener todos los materiales
-@materiales_bp.route("/materiales", methods=["GET"])
-def obtener_materiales():
-    materiales = Material.query.all()
-    materiales_json = [{"id": m.id, "nombre": m.nombre, "cantidad_disponible": m.cantidad_disponible} for m in materiales]
-    return jsonify(materiales_json), 200
-
-# Obtener un material por ID
-@materiales_bp.route("/materiales/<int:material_id>", methods=["GET"])
-def obtener_material(material_id):
-    material = Material.query.get(material_id)
-    if not material:
-        return jsonify({"error": "Material no encontrado"}), 404
-    return jsonify({"id": material.id, "nombre": material.nombre, "cantidad_disponible": material.cantidad_disponible}), 200
-
-# Crear un nuevo material
 @materiales_bp.route("/crearmateriales", methods=["POST"])
+@rol_requerido(["administrador", "arquitecto"])  # Restringir a administrador y arquitecto
 def crear_material():
     data = request.get_json()
+
     nombre = data.get("nombre")
     cantidad_disponible = data.get("cantidad_disponible", 0)
+    id_zona = data.get("id_zona")
 
     if not nombre:
-        return jsonify({"error": "El nombre es obligatorio"}), 400
+        return jsonify({"error": "El nombre del material es obligatorio"}), 400
+
+    if not id_zona:
+        return jsonify({"error": "El ID de la zona es obligatorio"}), 400
 
     try:
         cantidad_disponible = int(cantidad_disponible)
-        if cantidad_disponible < 0:  # Validar que la cantidad inicial no sea negativa
+        if cantidad_disponible < 0:  # Validar que la cantidad no sea negativa
             return jsonify({"error": "La cantidad disponible no puede ser negativa"}), 400
     except (ValueError, TypeError):
         return jsonify({"error": "La cantidad debe ser un número válido"}), 400
 
-    nuevo_material = Material(nombre=nombre, cantidad_disponible=cantidad_disponible)
+    nuevo_material = Material(
+        nombre=nombre,
+        cantidad_disponible=cantidad_disponible,
+        id_zona=id_zona
+    )
+
     db.session.add(nuevo_material)
     db.session.commit()
 
-    return jsonify({"message": "Material creado exitosamente", "id": nuevo_material.id}), 201
+    return jsonify({"mensaje": "Material creado exitosamente", "id": nuevo_material.id}), 201
 
-# Actualizar un material
-@materiales_bp.route("/materiales/<int:material_id>", methods=["PUT"])
-def actualizar_material(material_id):
+@materiales_bp.route("/mostrarmateriales", methods=["GET"])
+def obtener_materiales():
+    materiales = Material.query.all()
+    return jsonify([{
+        "id": material.id,
+        "nombre": material.nombre,
+        "cantidad_disponible": material.cantidad_disponible,
+        "id_zona": material.id_zona
+    } for material in materiales]), 200
+
+@materiales_bp.route("/modificarmateriales/<int:material_id>", methods=["PUT"])
+@rol_requerido(["administrador", "arquitecto"])  # Restringir a administrador y arquitecto
+def modificar_material(material_id):
     material = Material.query.get(material_id)
     if not material:
         return jsonify({"error": "Material no encontrado"}), 404
 
     data = request.get_json()
+
+    if "nombre" in data:
+        material.nombre = data["nombre"]
 
     if "cantidad_disponible" in data:
         try:
@@ -62,12 +71,14 @@ def actualizar_material(material_id):
         except (ValueError, TypeError):
             return jsonify({"error": "La cantidad debe ser un número válido"}), 400
 
-    material.nombre = data.get("nombre", material.nombre)
-    db.session.commit()
-    return jsonify({"message": "Material actualizado exitosamente"}), 200
+    if "id_zona" in data:
+        material.id_zona = data["id_zona"]
 
-# Eliminar un material
-@materiales_bp.route("/materiales/<int:material_id>", methods=["DELETE"])
+    db.session.commit()
+    return jsonify({"mensaje": "Material actualizado exitosamente"}), 200
+
+@materiales_bp.route("/eliminarmateriales/<int:material_id>", methods=["DELETE"])
+@rol_requerido(["administrador", "arquitecto"])  # Restringir a administrador y arquitecto
 def eliminar_material(material_id):
     material = Material.query.get(material_id)
     if not material:
@@ -75,92 +86,8 @@ def eliminar_material(material_id):
 
     db.session.delete(material)
     db.session.commit()
-    return jsonify({"message": "Material eliminado exitosamente"}), 200
 
-# Obtener todas las solicitudes
+    return jsonify({"mensaje": "Material eliminado exitosamente"}), 200
 
 
-# Crear nueva solicitud
-@materiales_bp.route("/materiales/solicitudes", methods=["POST"])
-def crear_solicitud():
-    data = request.json
-
-    if "material_id" not in data or "cantidad" not in data or "trabajador_id" not in data:
-        return jsonify({"error": "Faltan datos obligatorios"}), 400
-
-    material = Material.query.get(data["material_id"])
-    if not material:
-        return jsonify({"error": "Material no encontrado"}), 404
-
-    trabajador = Usuario.query.get(data["trabajador_id"])
-    if not trabajador:
-        return jsonify({"error": "Trabajador no encontrado"}), 404
-
-    try:
-        cantidad_solicitada = int(data["cantidad"])
-        if cantidad_solicitada <= 0:  # Validar que la cantidad sea positiva
-            return jsonify({"error": "La cantidad solicitada debe ser un número positivo"}), 400
-    except (ValueError, TypeError):
-        return jsonify({"error": "La cantidad debe ser un número válido"}), 400
-
-    if cantidad_solicitada > material.cantidad_disponible:
-        return jsonify({"error": "Cantidad solicitada excede el inventario"}), 400
-
-    # Restar la cantidad del inventario
-    material.cantidad_disponible -= cantidad_solicitada
-    db.session.commit()
-
-    return jsonify({"mensaje": "Solicitud procesada exitosamente"}), 201
-
-# Actualizar estado de solicitud
-@materiales_bp.route("/materiales/solicitudes/<int:id>", methods=["PUT"])
-def actualizar_solicitud(id):
-    solicitud = SolicitudMaterial.query.get(id)
-    if not solicitud:
-        return jsonify({"error": "Solicitud no encontrada"}), 404
-
-    data = request.json
-    solicitud.estado = data.get("estado", solicitud.estado)
-    db.session.commit()
-
-    return jsonify({"mensaje": "Solicitud actualizada"}), 200
-
-# Eliminar solicitud y devolver material al inventario si estaba aprobada
-@materiales_bp.route("/materiales/solicitudes/<int:id>", methods=["DELETE"])
-def eliminar_solicitud(id):
-    solicitud = SolicitudMaterial.query.get(id)
-    if not solicitud:
-        return jsonify({"error": "Solicitud no encontrada"}), 404
-
-    material = Material.query.get(solicitud.material_id)
-    if solicitud.estado == "Aprobada":
-        material.cantidad_disponible += solicitud.cantidad
-
-    db.session.delete(solicitud)
-    db.session.commit()
-
-    return jsonify({"mensaje": "Solicitud eliminada"}), 200
-
-@materiales_bp.route("/trabajadores", methods=["GET"]) 
-def obtener_trabajadores():
-    trabajadores = Usuario.query.all()
-    return jsonify([{"id": t.id, "nombre": t.nombre} for t in trabajadores]), 200
-
-# Obtener todas las solicitudes
-
-@materiales_bp.route("/mostrarsolicitudes", methods=["GET"])
-def obtener_solicitudes():
-    solicitudes = SolicitudMaterial.query.all()
-    solicitudes_json = [
-        {
-            "id": s.id,
-            "trabajador_id": s.trabajador_id,
-            "material_id": s.material_id,
-            "cantidad": s.cantidad,
-            "estado": s.estado,
-            "fecha_solicitud": s.fecha_solicitud.strftime("%Y-%m-%d %H:%M:%S")
-        }
-        for s in solicitudes
-    ]
-    return jsonify(solicitudes_json), 200
 
