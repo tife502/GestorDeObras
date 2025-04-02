@@ -1,9 +1,3 @@
-
-
-
-
-
-
 from flask import Blueprint, request, jsonify
 from app import db
 from app.models.zona import ZonaTrabajo

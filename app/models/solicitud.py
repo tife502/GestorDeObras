@@ -10,3 +10,4 @@ class SolicitudMaterial(db.Model):
     estado = db.Column(db.String(50), default="Pendiente")
     fecha_solicitud = db.Column(db.DateTime, default=func.now())
     id_zona = db.Column(db.Integer, db.ForeignKey("zonas_trabajo.id", ondelete="SET NULL"), nullable=True)
+    nombre = db.Column(db.String(255), nullable=False)  # Nombre del material solicitado
