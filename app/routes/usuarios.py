@@ -205,3 +205,49 @@ def modificar_usuario(id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+@usuarios_bp.route("/usuarios/<int:usuario_id>/asignar-zona", methods=["PUT"])
+def asignar_zona(usuario_id):
+    usuario = Usuario.query.get(usuario_id)
+    if not usuario:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    data = request.get_json()
+    id_zona = data.get("id_zona")
+
+    if not id_zona:
+        return jsonify({"error": "El ID de la zona es obligatorio"}), 400
+
+    zona = ZonaTrabajo.query.get(id_zona)
+    if not zona:
+        return jsonify({"error": "Zona de trabajo no encontrada"}), 404
+
+    # Asignar la zona al usuario
+    usuario.id_zona = id_zona
+    db.session.commit()
+
+    return jsonify({"mensaje": f"Zona de trabajo '{zona.nombre}' asignada al usuario '{usuario.nombre}' exitosamente"}), 200
+
+
+@usuarios_bp.route("/usuarios/<int:usuario_id>/modificar-zona", methods=["PUT"])
+def modificar_zona(usuario_id):
+    usuario = Usuario.query.get(usuario_id)
+    if not usuario:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    data = request.get_json()
+    id_zona = data.get("id_zona")
+
+    if not id_zona:
+        return jsonify({"error": "El ID de la zona es obligatorio"}), 400
+
+    zona = ZonaTrabajo.query.get(id_zona)
+    if not zona:
+        return jsonify({"error": "Zona de trabajo no encontrada"}), 404
+
+    # Modificar la zona asignada al usuario
+    usuario.id_zona = id_zona
+    db.session.commit()
+
+    return jsonify({"mensaje": f"Zona de trabajo actualizada a '{zona.nombre}' para el usuario '{usuario.nombre}'"}), 200
+
+

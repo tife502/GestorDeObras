@@ -1,14 +1,10 @@
 from flask import Blueprint, request, jsonify
 from app import db
 from app.models.material import Material
-from app.models.usuario import Usuario
-from app.models.solicitud import SolicitudMaterial
-from app.utils.decorators import rol_requerido  # Importa el decorador para roles
 
 materiales_bp = Blueprint("materiales", __name__)
 
 @materiales_bp.route("/crearmateriales", methods=["POST"])
-@rol_requerido(["administrador", "arquitecto"])  # Restringir a administrador y arquitecto
 def crear_material():
     data = request.get_json()
 
@@ -51,7 +47,6 @@ def obtener_materiales():
     } for material in materiales]), 200
 
 @materiales_bp.route("/modificarmateriales/<int:material_id>", methods=["PUT"])
-@rol_requerido(["administrador", "arquitecto"])  # Restringir a administrador y arquitecto
 def modificar_material(material_id):
     material = Material.query.get(material_id)
     if not material:
@@ -78,7 +73,6 @@ def modificar_material(material_id):
     return jsonify({"mensaje": "Material actualizado exitosamente"}), 200
 
 @materiales_bp.route("/eliminarmateriales/<int:material_id>", methods=["DELETE"])
-@rol_requerido(["administrador", "arquitecto"])  # Restringir a administrador y arquitecto
 def eliminar_material(material_id):
     material = Material.query.get(material_id)
     if not material:

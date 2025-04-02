@@ -11,14 +11,17 @@ class Usuario(db.Model):
     intentos_fallidos = db.Column(db.Integer, default=0)
     bloqueado_hasta = db.Column(db.DateTime, nullable=True)
     activo = db.Column(db.Boolean, default=True)
+    id_zona = db.Column(db.Integer, db.ForeignKey("zonas_trabajo.id", ondelete="SET NULL"), nullable=True)
     
     rol = db.relationship("Rol", backref=db.backref("usuarios", lazy=True))
     zona_trabajo = db.relationship("ZonaTrabajo", backref="trabajador", uselist=False)
 
     def to_dict(self):
         return {
-            "id": self.id,
-            "nombre": self.nombre,
-            "email": self.email,
-            "rol": self.rol_id
-        }
+        "id": self.id,
+        "nombre": self.nombre,
+        "email": self.email,
+        "rol": self.rol_id,
+        "id_zona": self.id_zona,  # ID de la zona de trabajo
+        "zona_trabajo": self.zona_trabajo.nombre if self.zona_trabajo else None  # Nombre de la zona si existe
+    }

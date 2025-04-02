@@ -13,7 +13,6 @@ def crear_zona():
     nombre = data.get("nombre")
     descripcion = data.get("descripcion", "")
     ubicacion = data.get("ubicacion", None)
-    trabajador_id = data.get("trabajador_id", None)
     finalizada = data.get("finalizada", False)
 
     if not nombre:
@@ -23,7 +22,6 @@ def crear_zona():
         nombre=nombre,
         descripcion=descripcion,
         ubicacion=ubicacion,
-        trabajador_id=trabajador_id,
         finalizada=finalizada
     )
 
@@ -40,7 +38,6 @@ def obtener_zonas():
         "nombre": zona.nombre,
         "descripcion": zona.descripcion,
         "ubicacion": zona.ubicacion,
-        "trabajador_id": zona.trabajador_id,
         "finalizada": zona.finalizada
     } for zona in zonas]), 200
 
@@ -55,7 +52,6 @@ def modificar_zona(id):
     zona.nombre = data.get("nombre", zona.nombre)
     zona.descripcion = data.get("descripcion", zona.descripcion)
     zona.ubicacion = data.get("ubicacion", zona.ubicacion)
-    zona.trabajador_id = data.get("trabajador_id", zona.trabajador_id)
     zona.finalizada = data.get("finalizada", zona.finalizada)
 
     db.session.commit()
