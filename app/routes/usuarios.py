@@ -156,20 +156,17 @@ def obtener_usuarios():
 
 
 # Eliminar usuario por ID
-@usuarios_bp.route("/eliminarusuario/<int:id>", methods=["PUT"])
+@usuarios_bp.route("/eliminarusuario/<int:id>", methods=["DELETE"])
 def eliminar_usuario(id):
     usuario = Usuario.query.get(id)
     if not usuario:
         return jsonify({"error": "Usuario no encontrado"}), 404
 
-    # Marcar al usuario como inactivo
-    usuario.activo = False
-    try:
-        db.session.commit()
-        return jsonify({"mensaje": "Usuario marcado como inactivo exitosamente"}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": f"Error al marcar como inactivo: {str(e)}"}), 500
+    db.session.delete(usuario)
+    db.session.commit()
+
+    return jsonify({"mensaje": "Usuario eliminado exitosamente"}), 200
+
 
 # Modificar usuario por ID
 @usuarios_bp.route("/modificarusuario/<int:id>", methods=["OPTIONS", "PATCH"])
@@ -197,6 +194,12 @@ def modificar_usuario(id):
             usuario.rol = rol_obj
         else:
             return jsonify({"error": "Rol no encontrado"}), 400
+    if "id_zona" in datos:
+        zona = ZonaTrabajo.query.get(datos["id_zona"])
+        if zona:
+            usuario.id_zona = datos["id_zona"]
+        else:
+            return jsonify({"error": "Zona no encontrada"}), 404
 
     try:
         db.session.commit()
@@ -249,5 +252,6 @@ def modificar_zona(usuario_id):
     db.session.commit()
 
     return jsonify({"mensaje": f"Zona de trabajo actualizada a '{zona.nombre}' para el usuario '{usuario.nombre}'"}), 200
+
 
 
