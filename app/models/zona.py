@@ -6,9 +6,7 @@ class ZonaTrabajo(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
-    descripcion = db.Column(db.Text)
+    descripcion = db.Column(db.Text, nullable=True)
     ubicacion = db.Column(db.String(255), nullable=True)
-    finalizada = db.Column(db.Boolean, default=False, nullable=False)  
-
-
+    finalizada = db.Column(db.Boolean, default=False, nullable=False)
 
