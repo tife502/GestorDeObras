@@ -1,3 +1,9 @@
+
+
+
+
+
+
 from flask import Blueprint, request, jsonify
 from app import db
 from app.models.zona import ZonaTrabajo
@@ -68,10 +74,6 @@ def eliminar_zona(id):
     db.session.commit()
 
     return jsonify({"mensaje": "Zona de trabajo eliminada exitosamente"}), 200
-
-
-
-
 
 
 
