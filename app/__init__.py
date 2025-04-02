@@ -36,6 +36,14 @@ def create_app():
     app.register_blueprint(materiales_bp, url_prefix="/api/materiales")
     from app.routes.roles import roles_bp
     app.register_blueprint(roles_bp, url_prefix="/api/roles")
+    from app.routes.solicitud import solicitudes_bp
+    app.register_blueprint(solicitudes_bp, url_prefix="/api/solicitudes")
+    
+    from app.routes.asistencia import asistencia_bp
+    app.register_blueprint(asistencia_bp, url_prefix="/api/asistencia")
+
+  
 
 
     return app
+  
