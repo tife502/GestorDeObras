@@ -42,6 +42,9 @@ def create_app():
     from app.routes.asistencia import asistencia_bp
     app.register_blueprint(asistencia_bp, url_prefix="/api/asistencia")
 
+    from app.routes.tareas import tareas_bp
+    app.register_blueprint(tareas_bp, url_prefix="/api/tareas")
+
   
 
 
