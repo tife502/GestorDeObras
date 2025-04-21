@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 from app import db
 from app.models.zona import ZonaTrabajo
-from app.models.usuario import Usuario  # Importamos el modelo de Usuario
+from app.models.usuario import Usuario  
+from app.models.tarea import Tarea
 from datetime import datetime
 
 zonas_bp = Blueprint("zonas", __name__)
@@ -33,13 +34,37 @@ def crear_zona():
 @zonas_bp.route("/mostrarzonas", methods=["GET"])
 def obtener_zonas():
     zonas = ZonaTrabajo.query.all()
-    return jsonify([{
-        "id": zona.id,
-        "nombre": zona.nombre,
-        "descripcion": zona.descripcion,
-        "ubicacion": zona.ubicacion,
-        "finalizada": zona.finalizada
-    } for zona in zonas]), 200
+    resultado = []
+
+    for zona in zonas:
+        # Obtener todas las tareas relacionadas con esta zona
+        tareas = Tarea.query.filter_by(id_zona=zona.id).all()
+
+        total_tareas = len(tareas)
+        tareas_completadas = len([t for t in tareas if t.estado.strip().lower() == "completada"])
+
+        # Calcular el avance
+        avance = round((tareas_completadas / total_tareas) * 100) if total_tareas > 0 else 0
+
+        # Verificar si todas las tareas están completadas para actualizar el estado de 'finalizada'
+        zona.finalizada = True if tareas_completadas == total_tareas else False
+        
+        # Guardar los cambios en la base de datos si el estado de finalizada cambió
+        db.session.commit()
+
+        # Construir el diccionario con el campo "avance" y "finalizada"
+        resultado.append({
+            "id": zona.id,
+            "nombre": zona.nombre,
+            "descripcion": zona.descripcion,
+            "ubicacion": zona.ubicacion,
+            "finalizada": zona.finalizada,  
+            "avance": avance  
+        })
+
+    return jsonify(resultado), 200
+
+
 
 @zonas_bp.route("/modificarzonas/<int:id>", methods=["PUT"])
 def modificar_zona(id):
@@ -68,6 +93,8 @@ def eliminar_zona(id):
     db.session.commit()
 
     return jsonify({"mensaje": "Zona de trabajo eliminada exitosamente"}), 200
+
+
 
 
 
