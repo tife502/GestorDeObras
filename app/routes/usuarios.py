@@ -42,7 +42,11 @@ def login():
             usuario.intentos_fallidos = 0
             db.session.commit()
             token = create_access_token(identity=usuario.id)
-            return jsonify({"token": token}), 200
+            return jsonify({
+                "token": token,
+                "rol_id": usuario.rol_id, 
+                "id": usuario.id  
+            }), 200
         else:
             usuario.intentos_fallidos += 1
             if usuario.intentos_fallidos >= 3:
