@@ -41,10 +41,10 @@ def crear_tarea():
     # Crear la tarea
     tarea = Tarea(
         descripcion=data['descripcion'],
-        estado=data.get('estado', 'Pendiente'),  # Estado por defecto es 'Pendiente'
         trabajador_id=data['trabajador_id'],
         evidencia=data.get('evidencia'),
-        id_zona=data.get('id_zona')
+        id_zona=data.get('id_zona'),
+        estado=bool(data.get('estado', False))  # Convertir a booleano, por defecto False
     )
 
     db.session.add(tarea)
@@ -54,10 +54,10 @@ def crear_tarea():
         "mensaje": "Tarea creada exitosamente",
         "id": tarea.id,
         "descripcion": tarea.descripcion,
-        "estado": tarea.estado,
         "trabajador_id": tarea.trabajador_id,
         "evidencia": tarea.evidencia,
-        "id_zona": tarea.id_zona
+        "id_zona": tarea.id_zona,
+        "estado": tarea.estado
     }), 201
 
 
@@ -71,7 +71,7 @@ def modificar_tarea(id):
 
     # Actualizar los campos si están presentes en el request
     tarea.descripcion = data.get("descripcion", tarea.descripcion)
-    tarea.estado = data.get("estado", tarea.estado)
+    tarea.estado = bool(data.get("estado", tarea.estado))  # Convertir a booleano
     tarea.trabajador_id = data.get("trabajador_id", tarea.trabajador_id)
     tarea.evidencia = data.get("evidencia", tarea.evidencia)
     tarea.id_zona = data.get("id_zona", tarea.id_zona)
@@ -91,3 +91,4 @@ def eliminar_tarea(id):
     db.session.commit()
 
     return jsonify({"mensaje": "Tarea eliminada correctamente"}), 200
+

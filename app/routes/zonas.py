@@ -41,7 +41,7 @@ def obtener_zonas():
         tareas = Tarea.query.filter_by(id_zona=zona.id).all()
 
         total_tareas = len(tareas)
-        tareas_completadas = len([t for t in tareas if t.estado.strip().lower() == "completada"])
+        tareas_completadas = len([t for t in tareas if t.estado is True])  # Completadas
 
         # Calcular el avance
         avance = round((tareas_completadas / total_tareas) * 100) if total_tareas > 0 else 0
@@ -63,8 +63,6 @@ def obtener_zonas():
         })
 
     return jsonify(resultado), 200
-
-
 
 @zonas_bp.route("/modificarzonas/<int:id>", methods=["PUT"])
 def modificar_zona(id):

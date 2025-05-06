@@ -7,7 +7,7 @@ class Usuario(db.Model):
     nombre = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    rol_id = db.Column(db.Integer, db.ForeignKey("roles.id", ondelete="CASCADE"), nullable=False, default=1)
+    rol_id = db.Column(db.Integer, db.ForeignKey("roles.id", ondelete="CASCADE"), nullable=False, default=4)
     intentos_fallidos = db.Column(db.Integer, default=0)
     bloqueado_hasta = db.Column(db.DateTime, nullable=True)
     activo = db.Column(db.Boolean, default=True)

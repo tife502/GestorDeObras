@@ -33,7 +33,7 @@ def login():
 
         if bcrypt.check_password_hash(usuario.password, data["password"]):
             if usuario.rol.nombrerol =="trabajador":
-                zona = ZonaTrabajo.query.filter_by(trabajador_id=usuario.id).first()
+                zona = usuario.zona_trabajo  # Accede a la relación definida en el modelo Usuario
                 if zona:
                     zona.check_in = datetime.utcnow()
                     zona.check_out = None
@@ -131,17 +131,6 @@ def resetear_contrasena(token):
 
     return jsonify({"mensaje": "Contraseña actualizada exitosamente"}), 200
 
-@usuarios_bp.route("/perfil", methods=["GET"])
-def perfil():
-    usuario_id = get_jwt_identity()
-    usuario = Usuario.query.get(usuario_id)
-    if not usuario:
-        return jsonify({"error": "Usuario no encontrado"}), 404
-    
-    return jsonify({
-        "nombre": usuario.nombre,
-        "email": usuario.email
-    }), 200
 
 @usuarios_bp.route("/usuarios/<int:id>/desactivar", methods=["PUT"])
 @rol_requerido('administrador')
@@ -212,27 +201,7 @@ def modificar_usuario(id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-@usuarios_bp.route("/usuarios/<int:usuario_id>/asignar-zona", methods=["PUT"])
-def asignar_zona(usuario_id):
-    usuario = Usuario.query.get(usuario_id)
-    if not usuario:
-        return jsonify({"error": "Usuario no encontrado"}), 404
 
-    data = request.get_json()
-    id_zona = data.get("id_zona")
-
-    if not id_zona:
-        return jsonify({"error": "El ID de la zona es obligatorio"}), 400
-
-    zona = ZonaTrabajo.query.get(id_zona)
-    if not zona:
-        return jsonify({"error": "Zona de trabajo no encontrada"}), 404
-
-    # Asignar la zona al usuario
-    usuario.id_zona = id_zona
-    db.session.commit()
-
-    return jsonify({"mensaje": f"Zona de trabajo '{zona.nombre}' asignada al usuario '{usuario.nombre}' exitosamente"}), 200
 
 
 @usuarios_bp.route("/usuarios/<int:usuario_id>/modificar-zona", methods=["PUT"])
