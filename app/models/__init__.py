@@ -6,3 +6,4 @@ from app.models.material import Material
 from app.models.solicitud import SolicitudMaterial
 from app.models.asistencia import Asistencia
 from app.models.reporte import Reporte
+from app.models.mensajes import Mensaje
