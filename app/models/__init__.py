@@ -7,3 +7,10 @@ from app.models.solicitud import SolicitudMaterial
 from app.models.asistencia import Asistencia
 from app.models.reporte import Reporte
 from app.models.mensajes import Mensaje
+from app.models.unidadmedida import UnidadMedida
+from app.models.inventario import Inventario
+from app.models.bodega import Bodega
+from app.models.estado_solicitud import EstadoSolicitud
+from app.models.estados_compra import EstadosCompra
+from app.models.orden_compra import OrdenCompra
+

@@ -27,10 +27,13 @@ def crear_tarea():
         return jsonify({"error": "Faltan datos obligatorios"}), 400
 
     # Verificar si el trabajador existe
+    # En tu endpoint crear_tarea
     trabajador = Usuario.query.get(data['trabajador_id'])
     if not trabajador:
-        return jsonify({"error": "Trabajador no encontrado"}), 404
+            return jsonify({"error": "Trabajador no encontrado"}), 404
 
+    if data.get('id_zona') and str(trabajador.id_zona) != str(data['id_zona']):
+            return jsonify({"error": "El trabajador no pertenece a la zona seleccionada"}), 400
     # Verificar si la zona de trabajo existe (opcional)
     zona_trabajo = None
     if data.get('id_zona'):
@@ -91,4 +94,16 @@ def eliminar_tarea(id):
     db.session.commit()
 
     return jsonify({"mensaje": "Tarea eliminada correctamente"}), 200
+
+@tareas_bp.route("/obtenertareas/<int:trabajador_id>", methods=["GET"])
+def obtener_tareas_por_trabajador(trabajador_id):
+    tareas = Tarea.query.filter_by(trabajador_id=trabajador_id).all()
+    return jsonify([{
+        "id": tarea.id,
+        "descripcion": tarea.descripcion,
+        "estado": tarea.estado,
+        "trabajador_id": tarea.trabajador_id,
+        "evidencia": tarea.evidencia,
+        "id_zona": tarea.id_zona
+    } for tarea in tareas]), 200
 

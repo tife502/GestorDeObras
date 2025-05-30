@@ -54,8 +54,27 @@ def create_app():
     from app.routes.tareas import tareas_bp
     app.register_blueprint(tareas_bp, url_prefix="/api/tareas")
     
-    from app.routes.mensajes import chat_bp
-    app.register_blueprint(chat_bp, url_prefix="/api/mensajes")
+    from app.routes.mensajes import mensajes_bp
+    app.register_blueprint(mensajes_bp, url_prefix="/api/mensajes")
+
+    from app.routes.bodega import bodega_bp
+    app.register_blueprint(bodega_bp, url_prefix="/api/bodega")
+
+    from app.routes.inventario import inventario_bp
+    app.register_blueprint(inventario_bp, url_prefix="/api/inventario")
+
+    from app.routes.orden_compra import orden_compra_bp
+    app.register_blueprint(orden_compra_bp, url_prefix="/api/orden_compra")
+
+    from app.routes.unidadmedida import unidad_medida_bp
+    app.register_blueprint(unidad_medida_bp, url_prefix="/api/unidades_medida")
+
+    from app.routes.estados_compra import estados_compra_bp
+    app.register_blueprint(estados_compra_bp, url_prefix="/api/estados_compra")
+
+    from app.routes.estados_solicitud import estados_solicitud_bp
+    app.register_blueprint(estados_solicitud_bp, url_prefix="/api/estados_solicitud")
+
 
     # Inicializar SocketIO
     socketio.init_app(app)

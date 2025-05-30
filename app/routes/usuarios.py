@@ -45,7 +45,8 @@ def login():
             return jsonify({
                 "token": token,
                 "rol_id": usuario.rol_id, 
-                "id": usuario.id  
+                "id": usuario.id,
+                "id_zona" : usuario.id_zona
             }), 200
         else:
             usuario.intentos_fallidos += 1
