@@ -43,7 +43,7 @@
 
        pip install Flask-Migrate
 
-   # b) Inicializar el entorno de migraciones (una sola vez)
+    # b) Inicializar el entorno de migraciones (una sola vez)
 
        flask db init
 
