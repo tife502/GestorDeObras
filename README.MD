@@ -1,6 +1,6 @@
 BACKEND 
 1. Clonar el repositorio 
-  git clone  https://github.com/tife502/fronted-gestor-obras
+  git clone  https://github.com/tife502/GestorDeObras
   cd tu-proyecto 
 
 2. Instalamos las dependencias 
