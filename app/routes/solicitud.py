@@ -6,8 +6,16 @@ from app.models.material import Material
 from app import db
 from flask import Blueprint, request, jsonify
 from datetime import datetime
+import unicodedata
+import re
 
 solicitudes_bp = Blueprint("solicitudes", __name__)
+
+def limpiar_nombre(nombre):
+    nfkd = unicodedata.normalize('NFKD', nombre)
+    solo_ascii = nfkd.encode('ASCII', 'ignore').decode('ASCII')
+    limpio = re.sub(r'[^a-zA-Z0-9\s]', '', solo_ascii)
+    return limpio.lower().strip()
 
 # Crear solicitud (material existente o nuevo)
 @solicitudes_bp.route("/crearsolicitud", methods=["POST"])
@@ -25,8 +33,16 @@ def crear_solicitud():
         id_unidad = data.get("id_unidad")
         if not nombre_material or not id_unidad:
             return jsonify({"error": "Faltan datos para nuevo material"}), 400
+
+        nombre_limpio = limpiar_nombre(nombre_material)
+        material_existente = Material.query.filter(
+            db.func.lower(db.func.unaccent(Material.nombre)) == nombre_limpio
+        ).first()
+        if material_existente:
+            return jsonify({"error": "Ya existe un material con ese nombre"}), 400
+
         # Crear el material primero
-        nuevo_material = Material(nombre=nombre_material, id_unidad=id_unidad)
+        nuevo_material = Material(nombre=nombre_limpio, id_unidad=id_unidad)
         db.session.add(nuevo_material)
         db.session.commit()
 
@@ -35,7 +51,7 @@ def crear_solicitud():
             cantidad=cantidad,
             es_nuevo=True,
             id_material=nuevo_material.id,
-            nombre_material=nombre_material,
+            nombre_material=nombre_limpio,
             id_unidad=id_unidad,
             fecha_solicitud=datetime.utcnow(),
             id_estado=id_estado,
